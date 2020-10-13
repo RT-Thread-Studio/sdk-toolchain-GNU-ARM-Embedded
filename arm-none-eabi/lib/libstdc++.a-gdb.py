@@ -1,5 +1,5 @@
 # -*- python -*-
-# Copyright (C) 2009-2015 Free Software Foundation, Inc.
+# Copyright (C) 2009-2019 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@ import gdb
 import os
 import os.path
 
-pythondir = '/home/build/work/GCC-5-build/install-native/share/gcc-arm-none-eabi'
-libdir = '/home/build/work/GCC-5-build/install-native/arm-none-eabi/lib'
+pythondir = '/Host/home/ilg/Work/arm-none-eabi-gcc-9.2.1-1.1/linux-x64/install/arm-none-eabi-gcc/share/gcc-arm-none-eabi'
+libdir = '/Host/home/ilg/Work/arm-none-eabi-gcc-9.2.1-1.1/linux-x64/install/arm-none-eabi-gcc/arm-none-eabi/lib'
 
 # This file might be loaded when there is no current objfile.  This
 # can happen if the user loads it manually.  In this case we don't

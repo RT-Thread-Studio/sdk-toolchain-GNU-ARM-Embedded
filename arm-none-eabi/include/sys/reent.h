@@ -30,11 +30,6 @@ typedef unsigned __Long __ULong;
 #include <sys/types.h>
 #endif
 
-#ifndef __machine_flock_t_defined
-#include <sys/lock.h>
-typedef _LOCK_RECURSIVE_T _flock_t;
-#endif
-
 #ifndef __Long
 #define __Long __int32_t
 typedef __uint32_t __ULong;
@@ -149,7 +144,7 @@ struct __sbuf {
  * _ub._base!=NULL) and _up and _ur save the current values of _p and _r.
  */
 
-#if defined(_REENT_SMALL) && !defined(_REENT_GLOBAL_STDIO_STREAMS)
+#ifdef _REENT_SMALL
 /*
  * struct __sFILE_fake is the start of a struct __sFILE, with only the
  * minimal fields allocated.  In __sinit() we really allocate the 3
@@ -170,7 +165,7 @@ struct __sFILE_fake {
 /* Following is needed both in libc/stdio and libc/stdlib so we put it
  * here instead of libc/stdio/local.h where it was previously. */
 
-extern void   __sinit (struct _reent *);
+extern _VOID   _EXFUN(__sinit,(struct _reent *));
 
 # define _REENT_SMALL_CHECK_INIT(ptr)		\
   do						\
@@ -179,9 +174,9 @@ extern void   __sinit (struct _reent *);
 	__sinit (ptr);				\
     }						\
   while (0)
-#else /* _REENT_SMALL && !_REENT_GLOBAL_STDIO_STREAMS */
+#else
 # define _REENT_SMALL_CHECK_INIT(ptr) /* nothing */
-#endif /* _REENT_SMALL && !_REENT_GLOBAL_STDIO_STREAMS */
+#endif
 
 struct __sFILE {
   unsigned char *_p;	/* current position in (some) buffer */
@@ -197,15 +192,15 @@ struct __sFILE {
 #endif
 
   /* operations */
-  void *	_cookie;	/* cookie passed to io functions */
+  _PTR	_cookie;	/* cookie passed to io functions */
 
-  _READ_WRITE_RETURN_TYPE (*_read) (struct _reent *, void *,
-					   char *, _READ_WRITE_BUFSIZE_TYPE);
-  _READ_WRITE_RETURN_TYPE (*_write) (struct _reent *, void *,
+  _READ_WRITE_RETURN_TYPE _EXFNPTR(_read, (struct _reent *, _PTR,
+					   char *, _READ_WRITE_BUFSIZE_TYPE));
+  _READ_WRITE_RETURN_TYPE _EXFNPTR(_write, (struct _reent *, _PTR,
 					    const char *,
-					    _READ_WRITE_BUFSIZE_TYPE);
-  _fpos_t (*_seek) (struct _reent *, void *, _fpos_t, int);
-  int (*_close) (struct _reent *, void *);
+					    _READ_WRITE_BUFSIZE_TYPE));
+  _fpos_t _EXFNPTR(_seek, (struct _reent *, _PTR, _fpos_t, int));
+  int _EXFNPTR(_close, (struct _reent *, _PTR));
 
   /* separate buffer for long sequences of ungetc() */
   struct __sbuf _ub;	/* ungetc buffer */
@@ -253,15 +248,15 @@ struct __sFILE64 {
   struct _reent *_data;
 
   /* operations */
-  void *	_cookie;	/* cookie passed to io functions */
+  _PTR	_cookie;	/* cookie passed to io functions */
 
-  _READ_WRITE_RETURN_TYPE (*_read) (struct _reent *, void *,
-					   char *, _READ_WRITE_BUFSIZE_TYPE);
-  _READ_WRITE_RETURN_TYPE (*_write) (struct _reent *, void *,
+  _READ_WRITE_RETURN_TYPE _EXFNPTR(_read, (struct _reent *, _PTR,
+					   char *, _READ_WRITE_BUFSIZE_TYPE));
+  _READ_WRITE_RETURN_TYPE _EXFNPTR(_write, (struct _reent *, _PTR,
 					    const char *,
-					    _READ_WRITE_BUFSIZE_TYPE);
-  _fpos_t (*_seek) (struct _reent *, void *, _fpos_t, int);
-  int (*_close) (struct _reent *, void *);
+					    _READ_WRITE_BUFSIZE_TYPE));
+  _fpos_t _EXFNPTR(_seek, (struct _reent *, _PTR, _fpos_t, int));
+  int _EXFNPTR(_close, (struct _reent *, _PTR));
 
   /* separate buffer for long sequences of ungetc() */
   struct __sbuf _ub;	/* ungetc buffer */
@@ -280,7 +275,7 @@ struct __sFILE64 {
   int   _flags2;        /* for future use */
 
   _off64_t _offset;     /* current lseek offset */
-  _fpos64_t (*_seek64) (struct _reent *, void *, _fpos64_t, int);
+  _fpos64_t _EXFNPTR(_seek64, (struct _reent *, _PTR, _fpos64_t, int));
 
 #ifndef __SINGLE_THREAD__
   _flock_t _lock;	/* for thread-safety locking */
@@ -396,7 +391,7 @@ struct _reent
 
   struct _mprec *_mp;
 
-  void (*__cleanup) (struct _reent *);
+  void _EXFNPTR(__cleanup, (struct _reent *));
 
   int _gamma_signgam;
 
@@ -422,43 +417,6 @@ struct _reent
   struct _misc_reent *_misc;            /* strtok, multibyte states */
   char *_signal_buf;                    /* strsignal */
 };
-
-#ifdef _REENT_GLOBAL_STDIO_STREAMS
-extern __FILE __sf[3];
-
-# define _REENT_INIT(var) \
-  { 0, \
-    &__sf[0], \
-    &__sf[1], \
-    &__sf[2], \
-    0,   \
-    _NULL, \
-    0, \
-    0, \
-    _NULL, \
-    _NULL, \
-    _NULL, \
-    0, \
-    0, \
-    _NULL, \
-    _NULL, \
-    _NULL, \
-    _NULL, \
-    _NULL, \
-    _REENT_INIT_ATEXIT \
-    {_NULL, 0, _NULL}, \
-    _NULL, \
-    _NULL, \
-    _NULL \
-  }
-
-#define _REENT_INIT_PTR_ZEROED(var) \
-  { (var)->_stdin = &__sf[0]; \
-    (var)->_stdout = &__sf[1]; \
-    (var)->_stderr = &__sf[2]; \
-  }
-
-#else /* _REENT_GLOBAL_STDIO_STREAMS */
 
 extern const struct __sFILE_fake __sf_fake_stdin;
 extern const struct __sFILE_fake __sf_fake_stdout;
@@ -496,12 +454,10 @@ extern const struct __sFILE_fake __sf_fake_stderr;
     (var)->_stderr = (__FILE *)&__sf_fake_stderr; \
   }
 
-#endif /* _REENT_GLOBAL_STDIO_STREAMS */
-
-/* Specify how to handle reent_check malloc failures. */
-#ifdef _REENT_CHECK_VERIFY
+/* Only add assert() calls if we are specified to debug.  */
+#ifdef _REENT_CHECK_DEBUG
 #include <assert.h>
-#define __reent_assert(x) ((x) ? (void)0 : __assert_func(__FILE__, __LINE__, (char *)0, "REENT malloc succeeded"))
+#define __reent_assert(x) assert(x)
 #else
 #define __reent_assert(x) ((void)0)
 #endif
@@ -628,7 +584,7 @@ struct _reent
 
   int __sdidinit;		/* 1 means stdio has been init'd */
 
-  void (*__cleanup) (struct _reent *);
+  void _EXFNPTR(__cleanup, (struct _reent *));
 
   /* used by mprec routines */
   struct _Bigint *_result;
@@ -688,23 +644,14 @@ struct _reent
      of the above members (on the off chance that future binary compatibility
      would be broken otherwise).  */
   struct _glue __sglue;		/* root of glue chain */
-# ifndef _REENT_GLOBAL_STDIO_STREAMS
   __FILE __sf[3];  		/* first three file descriptors */
-# endif
 };
-
-#ifdef _REENT_GLOBAL_STDIO_STREAMS
-extern __FILE __sf[3];
-#define _REENT_STDIO_STREAM(var, index) &__sf[index]
-#else
-#define _REENT_STDIO_STREAM(var, index) &(var)->__sf[index]
-#endif
 
 #define _REENT_INIT(var) \
   { 0, \
-    _REENT_STDIO_STREAM(&(var), 0), \
-    _REENT_STDIO_STREAM(&(var), 1), \
-    _REENT_STDIO_STREAM(&(var), 2), \
+    &(var).__sf[0], \
+    &(var).__sf[1], \
+    &(var).__sf[2], \
     0, \
     "", \
     0, \
@@ -749,9 +696,9 @@ extern __FILE __sf[3];
   }
 
 #define _REENT_INIT_PTR_ZEROED(var) \
-  { (var)->_stdin = _REENT_STDIO_STREAM(var, 0); \
-    (var)->_stdout = _REENT_STDIO_STREAM(var, 1); \
-    (var)->_stderr = _REENT_STDIO_STREAM(var, 2); \
+  { (var)->_stdin = &(var)->__sf[0]; \
+    (var)->_stdout = &(var)->__sf[1]; \
+    (var)->_stderr = &(var)->__sf[2]; \
     (var)->_new._reent._rand_next = 1; \
     (var)->_new._reent._r48._seed[0] = _RAND48_SEED_0; \
     (var)->_new._reent._r48._seed[1] = _RAND48_SEED_1; \
@@ -817,15 +764,15 @@ extern __FILE __sf[3];
 #endif
 
 extern struct _reent *_impure_ptr __ATTRIBUTE_IMPURE_PTR__;
-extern struct _reent *const _global_impure_ptr __ATTRIBUTE_IMPURE_PTR__;
+extern struct _reent *_CONST _global_impure_ptr __ATTRIBUTE_IMPURE_PTR__;
 
-void _reclaim_reent (struct _reent *);
+void _reclaim_reent _PARAMS ((struct _reent *));
 
 /* #define _REENT_ONLY define this to get only reentrant routines */
 
 #if defined(__DYNAMIC_REENT__) && !defined(__SINGLE_THREAD__)
 #ifndef __getreent
-  struct _reent * __getreent (void);
+  struct _reent * _EXFUN(__getreent, (void));
 #endif
 # define _REENT (__getreent())
 #else /* __SINGLE_THREAD__ || !__DYNAMIC_REENT__ */

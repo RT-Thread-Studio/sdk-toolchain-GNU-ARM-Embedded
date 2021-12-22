@@ -2,10 +2,7 @@
 _BEGIN_STD_C
 
 #if defined(__or1k__) || defined(__or1knd__)
-/*
- * r1, r2, r9, r14, r16 .. r30, SR.
- */
-#define _JBLEN 13
+#define _JBLEN 31 /* 32 GPRs - r0 */
 #define _JBTYPE unsigned long
 #endif
 
@@ -238,7 +235,7 @@ _BEGIN_STD_C
 #endif
 
 #ifdef __moxie__
-#define _JBLEN 10
+#define _JBLEN 16
 #endif
 
 #ifdef __CRX__
@@ -352,11 +349,6 @@ _BEGIN_STD_C
 #define _JBTYPE unsigned long
 #endif
 
-#ifdef __PRU__
-#define _JBLEN 48
-#define _JBTYPE unsigned int
-#endif
-
 #ifdef __RX__
 #define _JBLEN 0x44
 #endif
@@ -364,17 +356,6 @@ _BEGIN_STD_C
 #ifdef __VISIUM__
 /* All call-saved GP registers: r11-r19,r21,r22,r23.  */
 #define _JBLEN 12
-#endif
-
-#ifdef __riscv
-/* _JBTYPE using long long to make sure the alignment is align to 8 byte,
-   otherwise in rv32imafd, store/restore FPR may mis-align.  */
-#define _JBTYPE long long
-#ifdef __riscv_32e
-#define _JBLEN ((4*sizeof(long))/sizeof(long))
-#else
-#define _JBLEN ((14*sizeof(long) + 12*sizeof(double))/sizeof(long))
-#endif
 #endif
 
 #ifdef _JBLEN
@@ -387,7 +368,7 @@ typedef	int jmp_buf[_JBLEN];
 
 _END_STD_C
 
-#if (defined(__CYGWIN__) || defined(__rtems__)) && __POSIX_VISIBLE
+#if defined(__CYGWIN__) || defined(__rtems__)
 #include <signal.h>
 
 #ifdef __cplusplus
@@ -469,4 +450,4 @@ extern int _setjmp (jmp_buf);
 #ifdef __cplusplus
 }
 #endif
-#endif /* (__CYGWIN__ or __rtems__) and __POSIX_VISIBLE */
+#endif /* __CYGWIN__ or __rtems__ */

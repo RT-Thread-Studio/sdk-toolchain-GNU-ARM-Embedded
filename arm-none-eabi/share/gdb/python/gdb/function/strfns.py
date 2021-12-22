@@ -1,5 +1,5 @@
 # Useful gdb string convenience functions.
-# Copyright (C) 2012-2020 Free Software Foundation, Inc.
+# Copyright (C) 2012-2017 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,12 +21,14 @@ import re
 
 
 class _MemEq(gdb.Function):
-  """$_memeq - compare bytes of memory.
+  """$_memeq - compare bytes of memory
 
-Usage: $_memeq (A, B, LEN)
+Usage:
+  $_memeq(a, b, len)
 
 Returns:
-  True if LEN bytes at A and B compare equally."""
+  True if len bytes at a and b compare equally.
+"""
   def __init__(self):
     super(_MemEq, self).__init__("_memeq")
 
@@ -44,12 +46,14 @@ Returns:
 
 
 class _StrLen(gdb.Function):
-  """$_strlen - compute string length.
+  """$_strlen - compute string length
 
-Usage: $_strlen (A)
+Usage:
+  $_strlen(a)
 
 Returns:
-  Length of string A, assumed to be a string in the current language."""
+  Length of string a, assumed to be a string in the current language.
+"""
   def __init__(self):
     super(_StrLen, self).__init__("_strlen")
 
@@ -59,16 +63,18 @@ Returns:
 
 
 class _StrEq(gdb.Function):
-  """$_streq - check string equality.
+  """$_streq - check string equality
 
-Usage: $_streq (A, B)
+Usage:
+  $_streq(a, b)
 
 Returns:
-  True if A and B are identical strings in the current language.
+  True if a and b are identical strings in the current language.
 
 Example (amd64-linux):
   catch syscall open
-  cond $bpnum $_streq((char*) $rdi, "foo")"""
+  cond $bpnum $_streq((char*) $rdi, "foo")
+"""
   def __init__(self):
     super(_StrEq, self).__init__("_streq")
 
@@ -77,13 +83,15 @@ Example (amd64-linux):
 
 
 class _RegEx(gdb.Function):
-  """$_regex - check if a string matches a regular expression.
+  """$_regex - check if a string matches a regular expression
 
-Usage: $_regex (STRING, REGEX)
+Usage:
+  $_regex(string, regex)
 
 Returns:
-  True if string STRING (in the current language) matches the
-  regular expression REGEX."""
+  True if string str (in the current language) matches the
+  regular expression regex.
+"""
   def __init__(self):
     super(_RegEx, self).__init__("_regex")
 

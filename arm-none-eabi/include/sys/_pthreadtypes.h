@@ -18,7 +18,7 @@
 #ifndef _SYS__PTHREADTYPES_H_
 #define	_SYS__PTHREADTYPES_H_
 
-#if defined(_POSIX_THREADS) || __POSIX_VISIBLE >= 199506
+#if defined(_POSIX_THREADS)
 
 #include <sys/sched.h>
 
@@ -195,7 +195,7 @@ typedef struct {
 } pthread_once_t;       /* dynamic package initialization */
 
 #define _PTHREAD_ONCE_INIT  { 1, 0 }  /* is initialized and not run */
-#endif /* defined(_POSIX_THREADS) || __POSIX_VISIBLE >= 199506 */
+#endif /* defined(_POSIX_THREADS) */
 
 /* POSIX Barrier Types */
 

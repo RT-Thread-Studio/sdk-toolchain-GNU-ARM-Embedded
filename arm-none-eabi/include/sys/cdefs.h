@@ -3,6 +3,8 @@
 /* Written 2000 by Werner Almesberger */
 
 /*-
+ * SPDX-License-Identifier: BSD-3-Clause
+ *
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -99,27 +101,20 @@
  * having a compiler-agnostic source tree.
  */
 
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if defined(__GNUC__)
 
-#if __GNUC__ >= 3 || defined(__INTEL_COMPILER)
+#if __GNUC__ >= 3
 #define	__GNUCLIKE_ASM 3
 #define	__GNUCLIKE_MATH_BUILTIN_CONSTANTS
 #else
 #define	__GNUCLIKE_ASM 2
 #endif
 #define	__GNUCLIKE___TYPEOF 1
-#define	__GNUCLIKE___OFFSETOF 1
 #define	__GNUCLIKE___SECTION 1
 
-#ifndef __INTEL_COMPILER
 #define	__GNUCLIKE_CTOR_SECTION_HANDLING 1
-#endif
 
 #define	__GNUCLIKE_BUILTIN_CONSTANT_P 1
-#if defined(__INTEL_COMPILER) && defined(__cplusplus) && \
-   __INTEL_COMPILER < 800
-#undef __GNUCLIKE_BUILTIN_CONSTANT_P
-#endif
 
 #if (__GNUC_MINOR__ > 95 || __GNUC__ >= 3)
 #define	__GNUCLIKE_BUILTIN_VARARGS 1
@@ -127,21 +122,15 @@
 #define	__GNUCLIKE_BUILTIN_VAALIST 1
 #endif
 
-#if defined(__GNUC__)
 #define	__GNUC_VA_LIST_COMPATIBILITY 1
-#endif
 
 /*
  * Compiler memory barriers, specific to gcc and clang.
  */
-#if defined(__GNUC__)
 #define	__compiler_membar()	__asm __volatile(" " : : : "memory")
-#endif
 
-#ifndef __INTEL_COMPILER
 #define	__GNUCLIKE_BUILTIN_NEXT_ARG 1
 #define	__GNUCLIKE_MATH_BUILTIN_RELOPS
-#endif
 
 #define	__GNUCLIKE_BUILTIN_MEMCPY 1
 
@@ -157,7 +146,7 @@
 
 #define	__CC_SUPPORTS_DYNAMIC_ARRAY_INIT 1
 
-#endif /* __GNUC__ || __INTEL_COMPILER */
+#endif /* __GNUC__ */
 
 /*
  * The __CONCAT macro is used to concatenate parts of symbol names, e.g.
@@ -225,30 +214,19 @@
  * for a given compiler, let the compile fail if it is told to use
  * a feature that we cannot live without.
  */
-#ifdef lint
-#define	__dead2
-#define	__pure2
-#define	__unused
-#define	__packed
-#define	__aligned(x)
-#define	__alloc_align(x)
-#define	__alloc_size(x)
-#define	__section(x)
-#define	__weak_symbol
-#else
 #define	__weak_symbol	__attribute__((__weak__))
-#if !__GNUC_PREREQ__(2, 5) && !defined(__INTEL_COMPILER)
+#if !__GNUC_PREREQ__(2, 5)
 #define	__dead2
 #define	__pure2
 #define	__unused
 #endif
-#if __GNUC__ == 2 && __GNUC_MINOR__ >= 5 && __GNUC_MINOR__ < 7 && !defined(__INTEL_COMPILER)
+#if __GNUC__ == 2 && __GNUC_MINOR__ >= 5 && __GNUC_MINOR__ < 7
 #define	__dead2		__attribute__((__noreturn__))
 #define	__pure2		__attribute__((__const__))
 #define	__unused
 /* XXX Find out what to do for __packed, __aligned and __section */
 #endif
-#if __GNUC_PREREQ__(2, 7) || defined(__INTEL_COMPILER)
+#if __GNUC_PREREQ__(2, 7)
 #define	__dead2		__attribute__((__noreturn__))
 #define	__pure2		__attribute__((__const__))
 #define	__unused	__attribute__((__unused__))
@@ -259,15 +237,16 @@
 #endif
 #if __GNUC_PREREQ__(4, 3) || __has_attribute(__alloc_size__)
 #define	__alloc_size(x)	__attribute__((__alloc_size__(x)))
+#define	__alloc_size2(n, x)	__attribute__((__alloc_size__(n, x)))
 #else
 #define	__alloc_size(x)
+#define	__alloc_size2(n, x)
 #endif
 #if __GNUC_PREREQ__(4, 9) || __has_attribute(__alloc_align__)
 #define	__alloc_align(x)	__attribute__((__alloc_align__(x)))
 #else
 #define	__alloc_align(x)
 #endif
-#endif /* lint */
 
 #if !__GNUC_PREREQ__(2, 95)
 #define	__alignof(x)	__offsetof(struct { char __a; x __b; }, __b)
@@ -277,7 +256,7 @@
  * Keywords added in C11.
  */
 
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112L || defined(lint)
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112L
 
 #if !__has_extension(c_alignas)
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || \
@@ -296,7 +275,7 @@
 #endif
 
 #if !defined(__cplusplus) && !__has_extension(c_atomic) && \
-    !__has_extension(cxx_atomic)
+	!__has_extension(cxx_atomic) && !__GNUC_PREREQ__(4, 7)
 /*
  * No native support for _Atomic(). Place object in structure to prevent
  * most forms of direct non-atomic access.
@@ -314,7 +293,7 @@
 #if (defined(__cplusplus) && __cplusplus >= 201103L) || \
     __has_extension(cxx_static_assert)
 #define	_Static_assert(x, y)	static_assert(x, y)
-#elif __GNUC_PREREQ__(4,6)
+#elif __GNUC_PREREQ__(4,6) && !defined(__cplusplus)
 /* Nothing, gcc 4.6 and higher has _Static_assert built-in */
 #elif defined(__COUNTER__)
 #define	_Static_assert(x, y)	__Static_assert(x, __COUNTER__)
@@ -349,6 +328,9 @@
  * __generic().  Unlike _Generic(), this macro can only distinguish
  * between a single type, so it requires nested invocations to
  * distinguish multiple cases.
+ *
+ * Note that the comma operator is used to force expr to decay in
+ * order to match _Generic().
  */
 
 #if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L) || \
@@ -358,7 +340,7 @@
 #elif __GNUC_PREREQ__(3, 1) && !defined(__cplusplus)
 #define	__generic(expr, t, yes, no)					\
 	__builtin_choose_expr(						\
-	    __builtin_types_compatible_p(__typeof(expr), t), yes, no)
+	    __builtin_types_compatible_p(__typeof((0, (expr))), t), yes, no)
 #endif
 
 /*
@@ -384,8 +366,8 @@
 #define	__pure
 #endif
 
-#if __GNUC_PREREQ__(3, 1) || (defined(__INTEL_COMPILER) && __INTEL_COMPILER >= 800)
-#define	__always_inline	__attribute__((__always_inline__))
+#if __GNUC_PREREQ__(3, 1)
+#define	__always_inline	__inline__ __attribute__((__always_inline__))
 #else
 #define	__always_inline
 #endif
@@ -397,7 +379,7 @@
 #endif
 
 #if __GNUC_PREREQ__(3, 3)
-#define	__nonnull(x)	__attribute__((__nonnull__(x)))
+#define	__nonnull(x)	__attribute__((__nonnull__ x))
 #define	__nonnull_all	__attribute__((__nonnull__))
 #else
 #define	__nonnull(x)
@@ -425,22 +407,33 @@
 #endif
 
 /* XXX: should use `#if __STDC_VERSION__ < 199901'. */
-#if !__GNUC_PREREQ__(2, 7) && !defined(__INTEL_COMPILER)
+#if !__GNUC_PREREQ__(2, 7)
 #define	__func__	NULL
 #endif
 
 /*
- * GCC 2.95 provides `__restrict' as an extension to C90 to support the
- * C99-specific `restrict' type qualifier.  We happen to use `__restrict' as
- * a way to define the `restrict' type qualifier without disturbing older
- * software that is unaware of C99 keywords.
+ * We use `__restrict' as a way to define the `restrict' type qualifier
+ * without disturbing older software that is unaware of C99 keywords.
+ * GCC also provides `__restrict' as an extension to support C99-style
+ * restricted pointers in other language modes.
  */
-#if !(__GNUC__ == 2 && __GNUC_MINOR__ == 95)
-#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901 || defined(lint)
-#define	__restrict
-#else
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901
 #define	__restrict	restrict
+#elif !__GNUC_PREREQ__(2, 95)
+#define	__restrict
 #endif
+
+/*
+ * Additionally, we allow to use `__restrict_arr' for declaring arrays as
+ * non-overlapping per C99.  That's supported since gcc 3.1, but it's not
+ * allowed in C++.
+ */
+#if defined(__cplusplus) || !__GNUC_PREREQ__(3, 1)
+#define __restrict_arr
+#elif defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#define __restrict_arr       restrict
+#else
+#define __restrict_arr
 #endif
 
 /*
@@ -520,7 +513,7 @@
  * that are known to support the features properly (old versions of gcc-2
  * didn't permit keeping the keywords out of the application namespace).
  */
-#if !__GNUC_PREREQ__(2, 7) && !defined(__INTEL_COMPILER)
+#if !__GNUC_PREREQ__(2, 7)
 #define	__printflike(fmtarg, firstvararg)
 #define	__scanflike(fmtarg, firstvararg)
 #define	__format_arg(fmtarg)
@@ -540,18 +533,16 @@
 
 /* Compiler-dependent macros that rely on FreeBSD-specific extensions. */
 #if defined(__FreeBSD_cc_version) && __FreeBSD_cc_version >= 300001 && \
-    defined(__GNUC__) && !defined(__INTEL_COMPILER)
+    defined(__GNUC__)
 #define	__printf0like(fmtarg, firstvararg) \
 	    __attribute__((__format__ (__printf0__, fmtarg, firstvararg)))
 #else
 #define	__printf0like(fmtarg, firstvararg)
 #endif
 
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-#ifndef __INTEL_COMPILER
+#if defined(__GNUC__)
 #define	__strong_reference(sym,aliassym)	\
 	extern __typeof (sym) aliassym __attribute__ ((__alias__ (#sym)))
-#endif
 #ifdef __ELF__
 #ifdef __STDC__
 #define	__weak_reference(sym,alias)	\
@@ -595,7 +586,7 @@
 	__asm__(".stabs \"_/**/sym\",1,0,0,0")
 #endif	/* __STDC__ */
 #endif	/* __ELF__ */
-#endif	/* __GNUC__ || __INTEL_COMPILER */
+#endif	/* __GNUC__ */
 
 #ifndef	__FBSDID
 #define	__FBSDID(s)	struct __hack
@@ -652,7 +643,7 @@
  */
 
 #if __has_attribute(__argument_with_type_tag__) && \
-    __has_attribute(__type_tag_for_datatype__) && !defined(lint)
+    __has_attribute(__type_tag_for_datatype__)
 #define	__arg_type_tag(arg_kind, arg_idx, type_tag_idx) \
 	    __attribute__((__argument_with_type_tag__(arg_kind, arg_idx, type_tag_idx)))
 #define	__datatype_type_tag(kind, type) \
@@ -681,6 +672,8 @@
 #endif
 
 /* Structure implements a lock. */
+/* FIXME: Use __lockable__, etc. to avoid colliding with user namespace macros,
+ * once clang is fixed: https://bugs.llvm.org/show_bug.cgi?id=34319 */
 #define	__lockable		__lock_annotate(lockable)
 
 /* Function acquires an exclusive or shared lock. */
@@ -715,8 +708,47 @@
 /* Function should not be analyzed. */
 #define	__no_lock_analysis	__lock_annotate(no_thread_safety_analysis)
 
+/*
+ * Function or variable should not be sanitized, e.g., by AddressSanitizer.
+ * GCC has the nosanitize attribute, but as a function attribute only, and
+ * warns on use as a variable attribute.
+ */
+#if __has_attribute(no_sanitize) && defined(__clang__)
+#ifdef _KERNEL
+#define __nosanitizeaddress	__attribute__((no_sanitize("kernel-address")))
+#define __nosanitizememory	__attribute__((no_sanitize("kernel-memory")))
+#else
+#define __nosanitizeaddress	__attribute__((no_sanitize("address")))
+#define __nosanitizememory	__attribute__((no_sanitize("memory")))
+#endif
+#define __nosanitizethread	__attribute__((no_sanitize("thread")))
+#else
+#define __nosanitizeaddress
+#define __nosanitizememory
+#define __nosanitizethread
+#endif
+
 /* Guard variables and structure members by lock. */
 #define	__guarded_by(x)		__lock_annotate(guarded_by(x))
 #define	__pt_guarded_by(x)	__lock_annotate(pt_guarded_by(x))
+
+/* Alignment builtins for better type checking and improved code generation. */
+/* Provide fallback versions for other compilers (GCC/Clang < 10): */
+#if !__has_builtin(__builtin_is_aligned)
+#define __builtin_is_aligned(x, align)	\
+	(((__uintptr_t)x & ((align) - 1)) == 0)
+#endif
+#if !__has_builtin(__builtin_align_up)
+#define __builtin_align_up(x, align)	\
+	((__typeof__(x))(((__uintptr_t)(x)+((align)-1))&(~((align)-1))))
+#endif
+#if !__has_builtin(__builtin_align_down)
+#define __builtin_align_down(x, align)	\
+	((__typeof__(x))((x)&(~((align)-1))))
+#endif
+
+#define __align_up(x, y) __builtin_align_up(x, y)
+#define __align_down(x, y) __builtin_align_down(x, y)
+#define __is_aligned(x, y) __builtin_is_aligned(x, y)
 
 #endif /* !_SYS_CDEFS_H_ */
